@@ -3,6 +3,7 @@ const { Boom } = require('@hapi/boom');
 const http = require('http');
 const fs = require('fs');
 
+// Serveur pour Render
 http.createServer((req, res) => {
     res.write("Plasma Bot est en ligne !");
     res.end();
@@ -20,18 +21,21 @@ async function startBot() {
         auth: state,
         printQRInTerminal: false,
         browser: ["Ubuntu", "Chrome", "20.0.04"],
-        syncFullHistory: false
+        syncFullHistory: false,            // Ne pas charger tout l'historique
+        shouldSyncHistoryMessage: () => false, // BLOQUE l'historique pour éviter les bugs
+        linkPreviewImageThumbnailWidth: 192,
+        markOnlineOnConnect: true
     });
 
     if (!sock.authState.creds.registered) {
-        console.log("=== CONNEXION AUTOMATIQUE SUR RENDER ===");
-        const phoneNumber = "237689438139"; 
+        console.log("=== CONNEXION REQUISE ===");
+        const phoneNumber = "237689438139";
         setTimeout(async () => {
             try {
                 const code = await sock.requestPairingCode(phoneNumber);
                 console.log(`\n\n👉 VOTRE CODE DE COUPLAGE : ${code}\n\n`);
             } catch (err) {
-                console.error("Erreur lors de la demande du code :", err);
+                console.error("Erreur pairing code:", err);
             }
         }, 5000);
     }
@@ -41,17 +45,11 @@ async function startBot() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect } = update;
         if (connection === 'close') {
-            const statusCode = (lastDisconnect?.error instanceof Boom)?.output?.statusCode;
-            if (statusCode === DisconnectReason.loggedOut || statusCode === 401) {
-                if (fs.existsSync(authFolder)) {
-                    fs.rmSync(authFolder, { recursive: true, force: true });
-                }
-                startBot();
-            } else {
-                startBot();
-            }
+            const shouldReconnect = (lastDisconnect?.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log('Connexion perdue, reconnexion...', shouldReconnect);
+            if (shouldReconnect) startBot();
         } else if (connection === 'open') {
-            console.log('✅ BOT CONNECTÉ ET PRÊT !');
+            console.log('✅ BOT CONNECTÉ ET PRÊT (HISTORIQUE IGNORÉ) !');
         }
     });
 
@@ -60,19 +58,17 @@ async function startBot() {
         if (!msg.message || msg.key.fromMe || msg.key.remoteJid.includes('@g.us')) return;
 
         const sender = msg.key.remoteJid;
-
-        // --- MODIFICATION : IGNORER META AI ET RÉPONSE UNIQUE ---
-        // On ignore si c'est Meta AI (souvent lid ou adresse spécifique) ou si on a déjà répondu
         if (sender.includes('lid') || sender.includes('broadcast') || contactsRepondus.has(sender)) return;
 
+        // Augmentation de la marge à 120 secondes (2 minutes) pour Render
         const messageTimestamp = msg.messageTimestamp;
         const now = Math.floor(Date.now() / 1000);
-        if (now - messageTimestamp > 30) return;
+        if (now - messageTimestamp > 120) return; 
 
         const text = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
         const input = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
-        console.log(`📩 Message de ${sender} : ${text}`);
+        console.log(`📩 Nouveau message de ${sender}`);
 
         let reponse = "";
         if (input.includes("bonjour") || input.includes("salut")) {
@@ -80,27 +76,21 @@ async function startBot() {
         } else if (input.includes("prix") || input.includes("tarif") || input.includes("html") || input.includes("css") || input.includes("maquette")) {
             reponse = "Nos tarifs varient selon vos besoins 💸. Décrivez votre besoin📄, Christ vous répondra bientôt !";
         } else if (input.includes("competence") || input.includes("etude") || input.includes("programme") || input.includes("hacker")) {
-            reponse = "Actuellement étudiant à l'IUT de Douala. Mon créateur Christ est un passionné de tech et Développeur Front-End junior. \n D'ailleurs il a récemment travaillé sur un projet de site de messagerie instantanée.";
+            reponse = "Actuellement étudiant à l'IUT de Douala. Mon créateur Christ est un passionné de tech et Développeur Front-End junior.";
         } else if (input.includes("site") || input.includes("messagerie")) {
             reponse = "Voici le lien du projet : https://onrender.com . Laissez-lui vos avis ! 😊";
         } else {
-            reponse = "Merci pour votre message ! \nChrist est actuellement occupé 👩‍💻, mais votre message a été pris en compte il vous répondra dès que possible. ";
+            reponse = "Merci pour votre message ! \nChrist est actuellement occupé 👩‍💻, il vous répondra dès que possible.";
         }
 
-        // Marquer comme répondu AVANT l'envoi pour éviter les doublons durant les délais
         contactsRepondus.add(sender);
-
-        await delay(1000 + Math.random() * 1000);
         await sock.sendPresenceUpdate('composing', sender);
-        await delay(2000 + Math.random() * 2000);
-
+        await delay(3000);
         await sock.sendMessage(sender, { text: reponse });
-        await sock.sendPresenceUpdate('paused', sender);
     });
 }
 
 startBot().catch(err => console.error("Erreur critique:", err));
 
-setInterval(() => {
-    contactsRepondus.clear();
-}, 24 * 60 * 60 * 1000);
+// Nettoyage de la mémoire toutes les 24h
+setInterval(() => contactsRepondus.clear(), 24 * 60 * 60 * 1000);
