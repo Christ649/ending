@@ -75,8 +75,8 @@ async function startBot() {
         console.log(`📩 Message de ${sender} : ${text}`);
 
         let reponse = "";
-        if (input.includes("bonjour") || input.includes("salut")) {
-            reponse = "Bonjour 👩‍💻! Je suis Plasma, un bot créé par Christ. \n \n Comment puis-je vous aider? 😊";
+        if (input.includes("bonjour") || input.includes("salut") || input.include("yo) {
+            reponse = "Bonjour !👋/n Vous êtes bien sur le compte de *𝕮𝖍𝖗𝖎𝖘𝖙*./n *𝕮𝖍𝖗𝖎𝖘𝖙 n'est pas disponible pour le moment*. Je suis son assistant personnel🤖. Je peux prendre votre rendez-vous pour lui ✍️, il vous recontactera pour confirmer. 😉/n Merci de lui laisser un message precis!🙏 ";
         } else if (input.includes("prix") || input.includes("tarif") || input.includes("html") || input.includes("css") || input.includes("maquette")) {
             reponse = "Nos tarifs varient selon vos besoins 💸. Décrivez votre besoin📄, Christ vous répondra bientôt!";
         } else if (input.includes("competence") || input.includes("etude") || input.includes("programme") || input.includes("hacker")) {
@@ -84,7 +84,7 @@ async function startBot() {
         } else if (input.includes("site") || input.includes("messagerie")) {
             reponse = "Voici le lien du projet : https://onrender.com. Laissez-lui vos avis! 😊";
         } else {
-            reponse = "Merci pour votre message! \nChrist est actuellement occupé 👩‍💻, mais votre message a été pris en compte il vous répondra dès que possible. ";
+            reponse = "Merci pour votre message!\n*𝕮𝖍𝖗𝖎𝖘𝖙* est actuellement indisponible 👩‍💻, Merci de lui laisser un message precis!🙏 Il vous repondra des que possible. ";
         }
 
         // Marquer comme répondu AVANT l'envoi pour éviter les doublons durant les délais
