@@ -75,7 +75,7 @@ async function startBot() {
         console.log(`📩 Message de ${sender} : ${text}`);
 
         let reponse = "";
-        if (input.includes("bonjour") || input.includes("salut") || input.include("yo") {
+        if (input.includes("bonjour") || input.includes("salut") || input.includes("yo") ) {
             reponse = "Bonjour !👋/n Vous êtes bien sur le compte de *𝕮𝖍𝖗𝖎𝖘𝖙*./n *𝕮𝖍𝖗𝖎𝖘𝖙 n'est pas disponible pour le moment*. Je suis son assistant personnel🤖. Je peux prendre votre rendez-vous pour lui ✍️, il vous recontactera pour confirmer. 😉/n Merci de lui laisser un message precis!🙏 ";
         } else if (input.includes("prix") || input.includes("tarif") || input.includes("html") || input.includes("css") || input.includes("maquette")) {
             reponse = "Nos tarifs varient selon vos besoins 💸. Décrivez votre besoin📄, Christ vous répondra bientôt!";
